@@ -327,11 +327,16 @@ class _TaggableManager(models.Manager):
             f = self.through._meta.get_field(lookup_keys[0])
             remote_field = _remote_field(f)
             rel_model = _related_model(_remote_field(f))
-            objs = rel_model._default_manager.filter(**{
-                "%s__in" % remote_field.field_name: [r["content_object"] for r in qs]
-            })
-            for obj in objs:
-                items[(getattr(obj, remote_field.field_name),)] = obj
+             objs = rel_model._default_manager.filter(**{
+                  "%s__in" % remote_field.field_name: [r["content_object"] for r in qs]
+              })
+              actual_remote_field_name = remote_field.field_name
+              if VERSION > (1, 9):
+                  actual_remote_field_name = f.target_field.get_attname()
+              else:
+                  actual_remote_field_name = f.related_field.get_attname()
+              for obj in objs:
+                  items[(getattr(obj, actual_remote_field_name),)] = obj
         else:
             preload = {}
             for result in qs:
